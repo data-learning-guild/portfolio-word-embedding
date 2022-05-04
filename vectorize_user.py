@@ -12,6 +12,7 @@ from typing import Final
 
 import pandas as pd
 import spacy
+from dotenv import load_dotenv
 from gensim.models.doc2vec import Doc2Vec
 from janome.tokenizer import Tokenizer
 from tqdm import tqdm
@@ -32,13 +33,27 @@ t = Tokenizer()
 DATASET_DIR: Final[str] = './data'
 DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
 USERS_DATA_PATH: Final[str] = f'{DATASET_DIR}/users.csv.pkl'
+USERS_VEC_DIR: Final[str] = f'{DATASET_DIR}/users_vec'
 
 # ========================================================
 # Functions
 # ========================================================
+def mkdir_if_not_exist(path: str):
+    """Make directory if not exist"""
+    p = Path(path)
+    if p.exists():
+        return
+    p.mkdir(parents=True, exist_ok=True)
+
+
 def main(model_path: str):
     """word embedding for slack messages.
     """
+    # ----------------------------------------------------
+    # load envvar
+    # ----------------------------------------------------
+    load_dotenv(dotenv_path=f'{HERE}/.env')
+
     # ----------------------------------------------------
     # load trained model
     # ----------------------------------------------------
@@ -65,11 +80,12 @@ def main(model_path: str):
     # vectorizing messages per user
     # ----------------------------------------------------
     print(f'Vectorizing messages per user (# of users: {users.shape[0]})')
+    mkdir_if_not_exist(USERS_VEC_DIR)
     for (i, row) in tqdm(list(users.iterrows()), desc='[save vector]'):
         # get per user
-        uuid = row['user_id']
+        uid = row['user_id']
         uname = row['name']
-        u_msgs = loader.msgs_by_user(user_id=uuid, ch_join_msg=False).to_dataframe()[['user_id', 'text']]
+        u_msgs = loader.msgs_by_user(user_id=uid, ch_join_msg=False).to_dataframe()[['user_id', 'text']]
 
         # concat all of posted messages
         u_msgs_str = ' '.join(u_msgs['text'].values.tolist())
@@ -84,13 +100,13 @@ def main(model_path: str):
         # spaCy version: # vector = doc.vector.tolist()
         u_msgs_str_wakati = list(t.tokenize(u_msgs_str, wakati=True))
         vector = model.infer_vector(u_msgs_str_wakati).tolist()
-        with open(HERE + '/data/' + uuid + '.json', 'w', encoding='utf-8') as f:
+        with open(f'{USERS_VEC_DIR}/{uid}.json', 'w', encoding='utf-8') as f:
             json.dump(vector, f, indent=2)
 
 
 if __name__ == "__main__":
     args = sys.argv
-    model_path = DEFAULT_MODEL_PATH if len(args) > 1 else args[1]
+    model_path = args[1] if len(args) > 1 else DEFAULT_MODEL_PATH
     if len(args) < 2:
         print(f'[usage] {args[0]} [model_path]')
         print(f'default model_path: {DEFAULT_MODEL_PATH}')
