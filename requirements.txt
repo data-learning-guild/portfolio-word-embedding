@@ -8,3 +8,4 @@ Janome
 gensim
 google-cloud-storage
 python-dotenv
+jupyterlab
