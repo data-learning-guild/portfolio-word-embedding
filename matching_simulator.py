@@ -11,7 +11,7 @@ import os
 import pickle
 import sys
 from pathlib import Path
-from typing import List, Set, Dict, Tuple, TypeVar
+from typing import Final
 
 import google.auth
 import numpy as np
@@ -24,9 +24,21 @@ from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
 
 
+# ========================================================
+# Global Objects
+# ========================================================
 HERE = str(Path(__file__).resolve().parent)
 t = Tokenizer()
 
+# ========================================================
+# Constants
+# ========================================================
+DATASET_DIR: Final[str] = './data'
+DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
+
+# ========================================================
+# Functions
+# ========================================================
 def overlap(_x: list, _y: list) -> float:
     """overlap coefficient (Unuse)
         Szymkiewicz-Simpson coefficient)
@@ -36,6 +48,7 @@ def overlap(_x: list, _y: list) -> float:
     set_y = frozenset(_y)
     return len(set_x & set_y) / float(min(map(len, (set_x, set_y))))
 
+
 def cos_similarity(_x: list, _y: list) -> float:
     """cos similarity for small value
     """
@@ -43,10 +56,12 @@ def cos_similarity(_x: list, _y: list) -> float:
     vy = np.array(_y) * 10000
     return np.dot(vx, vy) / (np.linalg.norm(vx) * np.linalg.norm(vy))
 
-def main(input_text: str, input_uid: str):
+
+def main(input_text: str, input_uid: str, model_path: str):
+    """main function"""
     key_vector = []
-    model = Doc2Vec.load('./data/trained_doc2vec.model')
-    
+    model = Doc2Vec.load(model_path)
+
     # set key vector
     if input_text is not None:
         # vectorize input_text with trained model
@@ -57,17 +72,18 @@ def main(input_text: str, input_uid: str):
         cleaned_text_wakati = list(t.tokenize(cleaned_text, wakati=True))
         key_vector = model.infer_vector(cleaned_text_wakati).tolist()
     elif input_uid is not None:
-        p = Path('./data/{}.json'.format(input_uid))
+        user_path = f'{DATASET_DIR}/{input_uid}.json'
+        p = Path(user_path)
         if p.exists():
-            with open('./data/{}.json'.format(input_uid), 'r') as f:
+            with open(user_path, 'r') as f:
                 key_vector = json.load(f)
         else:
             print('user_id is invalid.')
             return
-    
+
     # search the most similar doc (Top 5)
     p = Path(HERE)
-    vec_file_list = list(p.glob('./data/*.json'))
+    vec_file_list = list(p.glob(f'{DATASET_DIR}/*.json'))
     uuid_l = []
     similarity_l = []
     for vec_file_path in vec_file_list:
@@ -77,7 +93,7 @@ def main(input_text: str, input_uid: str):
                 continue
         if vec_file_path.stem in ['dataset', 'test_dataset', 'train_dataset']:
             continue
-        
+
         uuid = vec_file_path.stem
         uuid_l.append(uuid)
 
@@ -89,16 +105,16 @@ def main(input_text: str, input_uid: str):
 
     df_sim_tbl = pd.DataFrame({'user_id': uuid_l, 'similarity': similarity_l})
     df_sim_tbl = df_sim_tbl.sort_values('similarity', ascending=False)
-    
+
     # DEBUG
     df_sim_tbl.to_csv('user_sim_tbl.csv', index=False)
 
     # output top 5 users
     df_sim_tbl_top5 = df_sim_tbl.head(5)
-    loader = DlgDwhLoader(os.environ['BQ_PROJECT_ID'])
+    loader = DlgDwhLoader(os.getenv('BQ_PROJECT_ID', ''))
     users_mart = loader.users_mart().to_dataframe()
     users_id_mst = users_mart[['user_id', 'name']]
-    
+
     print('============================')
     print('Top 5 users.')
     print('name\tuuid\tsimilarity')
@@ -110,6 +126,9 @@ def main(input_text: str, input_uid: str):
         print('{0}\t{1}\t{2}'.format(uname, uuid, similarity))
 
 
+# ========================================================
+# Main Function
+# ========================================================
 if __name__ == "__main__":
     """simulator entrypoint
         - arg0: __file__
@@ -120,6 +139,7 @@ if __name__ == "__main__":
     parser.add_argument('--cmd', required=False, help='matching key str from cmd arg')
     parser.add_argument('--file', required=False, help='matching key str from file')
     parser.add_argument('--user', required=False, help='indicate matching key vector with user id.')
+    parser.add_argument('--model', required=False, help='trained doc2vec model path')
 
     args = parser.parse_args()
     if (args.cmd is None) and (args.file is None) and (args.user is None):
@@ -129,6 +149,7 @@ if __name__ == "__main__":
     # set input text
     input_text = None
     input_uid = None
+    model_path = DEFAULT_MODEL_PATH if args.model is None else args.model
     if args.cmd is not None:
         input_text = args.cmd
         if (args.file is not None) or (args.user is not None):
@@ -147,4 +168,4 @@ if __name__ == "__main__":
             sys.exit(1)
 
     # main proc
-    main(input_text, input_uid)
+    main(input_text, input_uid, model_path)
