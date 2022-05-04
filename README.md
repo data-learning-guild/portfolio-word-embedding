@@ -82,7 +82,7 @@ python make_dataset.py
 
 ### 2. Train model
 
-前項で作成したデータセットを用いて、モデルを学習させ、学習済みモデルを保存します。
+前項で作成したデータセットを用いて、モデルを学習させ、学習済みモデルを保存します。（解説も交えた実装は `notebooks/train_doc2vec.ipynb` に記載 ）
 
 ```bash
 python train.py
