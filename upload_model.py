@@ -1,12 +1,19 @@
 """Upload model and user's vector files to Cloud Storage
 """
-from pathlib import Path
 import os
 import sys
+from dotenv import load_dotenv
+from pathlib import Path
+from typing import Final
 
 from google.cloud import storage
 
+from src.config import *
 
+
+# ========================================================
+# Functions
+# ========================================================
 def create_bucket_class_location(
     bucket_name: str, project_id: str, storage_class: str='STANDARD', location: str='asia-northeast1'):
     """Create a new bucket in specific location with storage class"""
@@ -49,39 +56,58 @@ def upload_blob(bucket_name, source_file_name, destination_blob_name):
     )
 
 
-def main():
+def main(model_path: str, users_data_path: str):
     """Main proc
     """
+    # ----------------------------------------------------
+    # load envvar
+    # ----------------------------------------------------
+    load_dotenv(dotenv_path='.env')
+
+    # ----------------------------------------------------
+    # create bucket on cloud storage
+    # ----------------------------------------------------
     bucket_name = os.environ['GAE_DEFAULT_BUCKET_NAME']
     project_id = os.environ['BQ_PROJECT_ID']
     create_bucket_class_location(bucket_name, project_id)
-    
-    p = Path('./data')
-    
+
+    # ----------------------------------------------------
     # upload trained model
-    p_list = list(p.glob('*.model.pkl'))
-    p_model = p_list[0] if len(p_list) > 0 else None
-    if p_model is None:
-        print('model path is invalid.')
-        sys.exit(1)
-    upload_blob(bucket_name, str(p_model), p_model.name)
+    # ----------------------------------------------------
+    p_model = Path(model_path)
+    if p_model.exists():
+        upload_blob(bucket_name, str(p_model), p_model.name)
+    else:
+        print(f'No trained model found at {model_path}')
 
+    # ----------------------------------------------------
     # upload users table
-    p_list = list(p.glob('users.csv.pkl'))
-    p_users_tbl = p_list[0] if len(p_list) > 0 else None
-    if p_users_tbl is None:
-        print('users tbl path is invalid.')
-        sys.exit(1)
-    upload_blob(bucket_name, str(p_users_tbl), p_users_tbl.name) 
+    # ----------------------------------------------------
+    p_users_tbl = Path(users_data_path)
+    if p_users_tbl.exists():
+        upload_blob(bucket_name, str(p_users_tbl), p_users_tbl.name)
+    else:
+        print(f'No users data found at {users_data_path}')
 
-    # upload user's vectors
-    p_list = list(p.glob('*.json'))
+    # ----------------------------------------------------
+    # upload users' vector
+    # ----------------------------------------------------
+    p_list = list(Path(USERS_VEC_DIR).glob(USERS_VEC_PATH_WILDCARD))
     p_list = [x for x in p_list if x.stem not in ['dataset', 'test_dataset', 'train_dataset']]
     p_vectors = p_list
 
     for p_vector in p_vectors:
         upload_blob(bucket_name, str(p_vector), 'vectors/' + p_vector.name)
+    print(f'Uploaded {len(p_vectors)} vectors')
 
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv
+    model_path = args[1] if len(args) > 1 else DEFAULT_MODEL_PATH
+    users_data_path = args[2] if len(args) > 2 else USERS_DATA_PATH
+    if len(args) != 3:
+        print(f'Usage: {args[0]} [option:model_path] [option:users_data_path]')
+        print(f'Default Model Path: {DEFAULT_MODEL_PATH}')
+        print(f'Default Users Data Path: {USERS_DATA_PATH}')
+
+    main(model_path=model_path, users_data_path=users_data_path)

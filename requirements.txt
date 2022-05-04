@@ -1,9 +1,11 @@
-spacy==2.3.2
-google-cloud-bigquery==2.2.0
-pandas==1.1.4
-pyarrow==2.0.0
-google-cloud-bigquery-storage==2.1.0
-numpy==1.19.4
-Janome==0.4.1
-gensim==3.8.3
-google-cloud-storage==1.32.0
+spacy
+google-cloud-bigquery < 3.0.0
+pandas
+pyarrow
+google-cloud-bigquery-storage
+numpy
+Janome
+gensim
+google-cloud-storage
+python-dotenv
+jupyterlab
