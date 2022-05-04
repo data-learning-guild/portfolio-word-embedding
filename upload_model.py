@@ -8,15 +8,8 @@ from typing import Final
 
 from google.cloud import storage
 
+from src.config import *
 
-# ========================================================
-# Constants
-# ========================================================
-DATASET_DIR: Final[str] = './data'
-USERS_DATA_PATH: Final[str] = f'{DATASET_DIR}/users.csv.pkl'
-DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
-USERS_VEC_DIR: Final[str] = f'{DATASET_DIR}/users_vec'
-USERS_VEC_PATH_WILDCARD: Final[str] = '*.json'
 
 # ========================================================
 # Functions

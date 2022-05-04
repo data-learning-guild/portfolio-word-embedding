@@ -17,6 +17,7 @@ from gensim.models.doc2vec import Doc2Vec
 from janome.tokenizer import Tokenizer
 from tqdm import tqdm
 
+from src.config import *
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
 
@@ -27,13 +28,6 @@ from src.preprocess import clean_msg
 HERE = str(Path(__file__).resolve().parent)
 t = Tokenizer()
 
-# ========================================================
-# Constants
-# ========================================================
-DATASET_DIR: Final[str] = './data'
-DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
-USERS_DATA_PATH: Final[str] = f'{DATASET_DIR}/users.csv.pkl'
-USERS_VEC_DIR: Final[str] = f'{DATASET_DIR}/users_vec'
 
 # ========================================================
 # Functions

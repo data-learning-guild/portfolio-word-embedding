@@ -15,16 +15,10 @@ from dotenv import load_dotenv
 from janome.tokenizer import Tokenizer
 from tqdm import tqdm
 
+from src.config import *
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
 
-
-# ============================
-# Constants
-# ============================
-DATASET_DIR: Final[str] = './data'
-TRAIN_DATASET_PATH: Final[str] = f'{DATASET_DIR}/train_dataset.json'
-TEST_DATASET_PATH: Final[str] = f'{DATASET_DIR}/test_dataset.json'
 
 # ============================
 # Global variables
@@ -109,10 +103,10 @@ def main():
 
     # Save
     mkdir_if_not_exist(DATASET_DIR)
-    with open(TRAIN_DATASET_PATH, 'w', encoding='utf-8') as f:
+    with open(DEFAULT_TRAIN_DATASET_PATH, 'w', encoding='utf-8') as f:
         json.dump(train_data, f, ensure_ascii=False, indent=4)
 
-    with open(TEST_DATASET_PATH, 'w', encoding='utf-8') as f:
+    with open(DEFAULT_TEST_DATASET_PATH, 'w', encoding='utf-8') as f:
         json.dump(test_data, f, ensure_ascii=False, indent=4)
 
 

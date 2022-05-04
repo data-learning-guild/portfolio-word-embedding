@@ -8,15 +8,12 @@ import numpy as np
 from gensim.models.doc2vec import (
     Doc2Vec, TaggedDocument)
 
-from make_dataset import TRAIN_DATASET_PATH
+from src.config import *
 
 
 # =========================
 # Constants
 # =========================
-DATASET_DIR: Final[str] = './data'
-DEFAULT_TRAIN_DATASET_PATH: Final[str] = f'{DATASET_DIR}/train_dataset.json'
-DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
 
 # Hyper parameters
 HP_VECTOR_SIZE: Final[int] = 400
