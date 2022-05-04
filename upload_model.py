@@ -55,9 +55,9 @@ def main():
     bucket_name = os.environ['GAE_DEFAULT_BUCKET_NAME']
     project_id = os.environ['BQ_PROJECT_ID']
     create_bucket_class_location(bucket_name, project_id)
-    
+
     p = Path('./data')
-    
+
     # upload trained model
     p_list = list(p.glob('*.model.pkl'))
     p_model = p_list[0] if len(p_list) > 0 else None

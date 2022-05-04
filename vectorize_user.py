@@ -6,36 +6,65 @@
 import json
 import os
 import pickle
+import sys
 from pathlib import Path
+from typing import Final
 
-from gensim.models.doc2vec import Doc2Vec
-from janome.tokenizer import Tokenizer
 import pandas as pd
 import spacy
+from gensim.models.doc2vec import Doc2Vec
+from janome.tokenizer import Tokenizer
 from tqdm import tqdm
 
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
 
 
+# ========================================================
+# Global Objects
+# ========================================================
 HERE = str(Path(__file__).resolve().parent)
 t = Tokenizer()
 
-def main():
+# ========================================================
+# Constants
+# ========================================================
+DATASET_DIR: Final[str] = './data'
+DEFAULT_MODEL_PATH: Final[str] = f'{DATASET_DIR}/trained_doc2vec.model.pkl'
+USERS_DATA_PATH: Final[str] = f'{DATASET_DIR}/users.csv.pkl'
+
+# ========================================================
+# Functions
+# ========================================================
+def main(model_path: str):
     """word embedding for slack messages.
     """
+    # ----------------------------------------------------
     # load trained model
+    # ----------------------------------------------------
     # spaCy version: # nlp = spacy.load('ja_core_news_lg')
-    model = Doc2Vec.load('./data/trained_doc2vec.model')
+    print(f'Loading model from {model_path}')
+    model = Doc2Vec.load(model_path)
 
+    # ----------------------------------------------------
     # get users id list
+    # ----------------------------------------------------
+    print('Loading users data')
     loader = DlgDwhLoader(os.environ['BQ_PROJECT_ID'])
     users_mart = loader.users_mart().to_dataframe()
     users = users_mart[['user_id', 'name']]
-    with open('./data/users.csv.pkl', 'wb') as f:
-        pickle.dump(users, f)
 
+    # ----------------------------------------------------
+    # save users' data
+    # ----------------------------------------------------
+    with open(USERS_DATA_PATH, 'wb') as f:
+        pickle.dump(users, f)
+        print(f'Saved users data to {USERS_DATA_PATH}')
+
+    # ----------------------------------------------------
     # vectorizing messages per user
+    # ----------------------------------------------------
+    print(f'Vectorizing messages per user (# of users: {users.shape[0]})')
     for (i, row) in tqdm(list(users.iterrows()), desc='[save vector]'):
         # get per user
         uuid = row['user_id']
@@ -57,8 +86,14 @@ def main():
         vector = model.infer_vector(u_msgs_str_wakati).tolist()
         with open(HERE + '/data/' + uuid + '.json', 'w', encoding='utf-8') as f:
             json.dump(vector, f, indent=2)
-        
+
 
 if __name__ == "__main__":
-    main()
+    args = sys.argv
+    model_path = DEFAULT_MODEL_PATH if len(args) > 1 else args[1]
+    if len(args) < 2:
+        print(f'[usage] {args[0]} [model_path]')
+        print(f'default model_path: {DEFAULT_MODEL_PATH}')
+
+    main(model_path)
 
