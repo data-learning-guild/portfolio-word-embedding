@@ -5,28 +5,44 @@
 """
 import json
 import os
-from pathlib import Path
 import random
+from pathlib import Path
+from typing import Final
 
-from janome.tokenizer import Tokenizer
 import numpy as np
 import pandas as pd
+from dotenv import load_dotenv
+from janome.tokenizer import Tokenizer
 from tqdm import tqdm
 
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
 
 
+# ============================
+# Constants
+# ============================
+DATASET_DIR: Final[str] = './data'
+TRAIN_DATASET_PATH: Final[str] = f'{DATASET_DIR}/train_dataset.json'
+TEST_DATASET_PATH: Final[str] = f'{DATASET_DIR}/test_dataset.json'
+
+# ============================
+# Global variables
+# ============================
 HERE = str(Path(__file__).resolve().parent)
 t = Tokenizer()
 
+
+# ============================
+# Functions
+# ============================
 def load_slack_posts():
     """Load slack posts from bigquery
         Returns:
             list of sentence (ndarray Nx1)
     """
     # get users id list
-    loader = DlgDwhLoader(os.environ['BQ_PROJECT_ID'])
+    loader = DlgDwhLoader(os.getenv('BQ_PROJECT_ID', ''))
     users_mart = loader.users_mart().to_dataframe()
     users = users_mart[['user_id', 'name']]
 
@@ -36,12 +52,12 @@ def load_slack_posts():
         # get per user
         uuid = row['user_id']
         u_msgs = loader.msgs_by_user(user_id=uuid, ch_join_msg=False).to_dataframe()['text']
-        
+
         if u_msgs.shape[0] == 0:
             continue
-        
-        posts = np.hstack([posts, u_msgs.values])            
-    
+
+        posts = np.hstack([posts, u_msgs.values])
+
     return posts
 
 def to_dataset(posts: list=None) -> list:
@@ -59,6 +75,14 @@ def to_dataset(posts: list=None) -> list:
     return dataset
 
 
+def mkdir_if_not_exist(path: str):
+    """Make directory if not exist"""
+    p = Path(path)
+    if p.exists():
+        return
+    p.mkdir(parents=True, exist_ok=True)
+
+
 def main():
     """Main proc
         Dataset:
@@ -67,6 +91,9 @@ def main():
             ...
         ]
     """
+    # Load envvars
+    load_dotenv(os.path.join(HERE, '.env'))
+
     # Load slack messages
     posts = load_slack_posts()
 
@@ -75,18 +102,22 @@ def main():
     train_size = int(len(posts) * 0.8)
     posts_train = posts[:train_size]
     posts_test = posts[train_size:]
-    
+
     # Make dataset
     train_data = to_dataset(posts_train)
     test_data = to_dataset(posts_test)
 
     # Save
-    with open('./data/train_dataset.json', 'w', encoding='utf-8') as f:
+    mkdir_if_not_exist(DATASET_DIR)
+    with open(TRAIN_DATASET_PATH, 'w', encoding='utf-8') as f:
         json.dump(train_data, f, ensure_ascii=False, indent=4)
 
-    with open('./data/test_dataset.json', 'w', encoding='utf-8') as f:
+    with open(TEST_DATASET_PATH, 'w', encoding='utf-8') as f:
         json.dump(test_data, f, ensure_ascii=False, indent=4)
 
 
+# ============================
+# Entry point
+# ============================
 if __name__ == "__main__":
     main()

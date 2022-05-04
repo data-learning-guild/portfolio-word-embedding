@@ -16,6 +16,7 @@ See:
 - [Creating buckets with gsutil | Google Cloud Docs][gsutil_mb]
 - [Creating buckets with python | Google Cloud Docs][create_bucket_python]
 - [GCS Storage classes | Google Cloud Docs][gcs_storage_classes]
+- [Google Cloud Authentication Getting Started | Google Cloud Docs][gcp_auth_getstarted]
 
 [spacy_usage]: https://spacy.io/usage
 [spacy_models]: https://spacy.io/models
@@ -30,6 +31,7 @@ See:
 [gcs_storage_classes]: https://cloud.google.com/storage/docs/storage-classes
 [upload_to_gcs_python]: https://cloud.google.com/storage/docs/uploading-objects#storage-upload-object-python
 [create_bucket_python]: https://cloud.google.com/storage/docs/creating-buckets#storage-create-bucket-code_samples
+[gcp_auth_getstarted]: https://cloud.google.com/docs/authentication/getting-started
 
 ---
 
@@ -56,6 +58,27 @@ python -m spacy download ja_core_news_lg
 ## Learning
 
 ---
+
+## Usage - new
+
+1. enter into virtual env
+2. Setup
+   1. gcp service account credentials
+   2. EnvVars
+3. make dataset
+   1. `python make_dataset.py`
+4. train
+   1. `python train.py`
+5. vectorize user with trained model
+   1. `python vectorize_user.py`
+6. simulate matching
+   1. `python matching_simulator.py --cmd Pythonに詳しい人`
+      1. get matched users with topic in `--cmd` args
+   2. `python matching_simulator.py --file question.txt`
+      1. get matched users with topic written in file (given by `--file` option)
+   3. `python matching_simulator.py --user $SLACK_USER_ID`
+      1. get the users who are similar to a specific user (given by `--user` option)
+
 
 ## Usage
 
