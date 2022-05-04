@@ -20,6 +20,7 @@ from tqdm import tqdm
 from src.config import *
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
+from src.utils import *
 
 
 # ========================================================
@@ -32,14 +33,6 @@ t = Tokenizer()
 # ========================================================
 # Functions
 # ========================================================
-def mkdir_if_not_exist(path: str):
-    """Make directory if not exist"""
-    p = Path(path)
-    if p.exists():
-        return
-    p.mkdir(parents=True, exist_ok=True)
-
-
 def main(model_path: str):
     """word embedding for slack messages.
     """

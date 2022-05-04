@@ -9,6 +9,7 @@ from gensim.models.doc2vec import (
     Doc2Vec, TaggedDocument)
 
 from src.config import *
+from src.utils import *
 
 
 # =========================
@@ -38,12 +39,6 @@ def read_corpus(fname: str, tokens_only: bool=False):
             else:
                 # For training data, add tags
                 yield TaggedDocument(doc_text, [doc_tag])
-
-def cos_similarity(_x: list, _y: list) -> float:
-    """compute cos similarity"""
-    vx = np.array(_x)
-    vy = np.array(_y)
-    return np.dot(vx, vy) / (np.linalg.norm(vx) * np.linalg.norm(vy))
 
 
 def simulate_matching(model: Doc2Vec):

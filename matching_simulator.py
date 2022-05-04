@@ -23,6 +23,7 @@ from janome.tokenizer import Tokenizer
 from src.config import *
 from src.load import DlgDwhLoader
 from src.preprocess import clean_msg
+from src.utils import *
 
 
 # ========================================================
@@ -35,24 +36,6 @@ t = Tokenizer()
 # ========================================================
 # Functions
 # ========================================================
-def overlap(_x: list, _y: list) -> float:
-    """overlap coefficient (Unuse)
-        Szymkiewicz-Simpson coefficient)
-        https://en.wikipedia.org/wiki/Overlap_coefficient
-    """
-    set_x = frozenset(_x)
-    set_y = frozenset(_y)
-    return len(set_x & set_y) / float(min(map(len, (set_x, set_y))))
-
-
-def cos_similarity(_x: list, _y: list) -> float:
-    """cos similarity for small value
-    """
-    vx = np.array(_x) * 10000
-    vy = np.array(_y) * 10000
-    return np.dot(vx, vy) / (np.linalg.norm(vx) * np.linalg.norm(vy))
-
-
 def main(input_text: str, input_uid: str, model_path: str):
     """main function"""
     key_vector = []
